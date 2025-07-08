@@ -1,0 +1,72 @@
+# UAV Visualization Parameters Configuration
+# Configuração de parâmetros para o sistema de visualização UAV
+
+uav_visualizer:
+  ros__parameters:
+    # Visualization settings
+    vehicle_trail_size: 1000        # Número máximo de pontos na trilha do veículo
+    setpoint_trail_size: 500        # Número máximo de pontos na trilha dos setpoints
+    marker_scale: 0.5               # Escala geral dos marcadores
+    update_rate: 20.0               # Taxa de atualização em Hz
+    
+    # Frame references
+    base_frame: "map"               # Frame de referência principal
+    vehicle_frame: "base_link"      # Frame do veículo
+    
+    # Battery warning thresholds
+    battery_warning_threshold: 0.3  # Limiar para aviso de bateria baixa
+    battery_critical_threshold: 0.15 # Limiar crítico da bateria
+    
+    # Visualization appearance
+    velocity_arrow_scale: 0.3       # Escala da seta de velocidade
+    status_text_scale: 0.25         # Escala do texto de status
+    
+    # Path appearance
+    vehicle_path_color:
+      r: 0.0
+      g: 1.0  # Verde para a trilha do veículo
+      b: 0.0
+      a: 1.0
+      
+    setpoint_path_color:
+      r: 1.0  # Amarelo para a trilha dos setpoints
+      g: 1.0
+      b: 0.0
+      a: 0.8
+      
+    velocity_arrow_color:
+      r: 1.0  # Amarelo para vetor velocidade
+      g: 1.0
+      b: 0.0
+      a: 0.8
+    
+    # Emergency colors
+    emergency_color:
+      r: 1.0  # Vermelho para emergências
+      g: 0.0
+      b: 0.0
+      a: 1.0
+      
+    warning_color:
+      r: 1.0  # Laranja para avisos
+      g: 0.65
+      b: 0.0
+      a: 1.0
+      
+    normal_color:
+      r: 0.0  # Verde para status normal
+      g: 1.0
+      b: 0.0
+      a: 1.0
+    
+    # Display options
+    show_velocity_vector: true      # Mostrar vetor de velocidade
+    show_battery_status: true       # Mostrar status da bateria
+    show_home_position: true        # Mostrar posição home
+    show_mission_info: true         # Mostrar informações da missão
+    show_alerts: true               # Mostrar alertas e avisos
+    
+    # Performance settings
+    max_markers_per_type: 100       # Máximo de marcadores por tipo
+    cleanup_old_markers: true       # Limpar marcadores antigos automaticamente
+    marker_lifetime: 10.0           # Tempo de vida dos marcadores em segundos 
