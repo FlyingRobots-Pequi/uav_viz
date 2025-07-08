@@ -69,6 +69,11 @@ def generate_launch_description():
             default_value='map',
             description='World/map frame ID'
         ),
+        DeclareLaunchArgument(
+            'uav_namespace',
+            default_value='',
+            description='Namespace prefix for all UAV topics (both PX4 and custom)'
+        ),
     ]
     
     return LaunchDescription(launch_arguments + [
@@ -88,6 +93,7 @@ def launch_setup(context, *args, **kwargs):
     log_level = LaunchConfiguration('log_level').perform(context)
     vehicle_frame = LaunchConfiguration('vehicle_frame').perform(context)
     world_frame = LaunchConfiguration('world_frame').perform(context)
+    uav_namespace = LaunchConfiguration('uav_namespace').perform(context)
     
     # Convert string to boolean
     launch_rviz_bool = launch_rviz.lower() in ['true', '1', 'yes']
@@ -103,6 +109,7 @@ def launch_setup(context, *args, **kwargs):
             'use_sim_time': use_sim_time_bool,
             'vehicle_frame': vehicle_frame,
             'base_frame': world_frame,
+            'uav_namespace': uav_namespace,
         }
     ]
     
@@ -114,19 +121,7 @@ def launch_setup(context, *args, **kwargs):
         namespace=namespace,
         parameters=node_params,
         output='screen',
-        arguments=['--ros-args', '--log-level', log_level],
-        remappings=[
-            # PX4 topics
-            ('/fmu/out/vehicle_local_position', f'{ns_prefix}/fmu/out/vehicle_local_position'),
-            ('/fmu/out/vehicle_attitude', f'{ns_prefix}/fmu/out/vehicle_attitude'),
-            ('/fmu/out/battery_status', f'{ns_prefix}/fmu/out/battery_status'),
-            ('/fmu/in/trajectory_setpoint', f'{ns_prefix}/fmu/in/trajectory_setpoint'),
-            
-            # Custom UAV topics
-            ('/uav_status', f'{ns_prefix}/uav_status'),
-            ('/mission_state', f'{ns_prefix}/mission_state'),
-            ('/mission_cmd', f'{ns_prefix}/mission_cmd'),
-        ]
+        arguments=['--ros-args', '--log-level', log_level]
     )
     
     # Static transform publisher for coordinate frames

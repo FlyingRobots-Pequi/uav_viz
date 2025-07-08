@@ -27,6 +27,15 @@ class UAVStatusMonitor(Node):
     def __init__(self):
         super().__init__('uav_status_monitor')
         
+        # Declare and get namespace parameter for UAV topics
+        self.declare_parameter('uav_namespace', '')
+        self.uav_namespace = self.get_parameter('uav_namespace').value
+        
+        if self.uav_namespace:
+            self.get_logger().info(f'Using UAV namespace: {self.uav_namespace}')
+        else:
+            self.get_logger().info('Using default UAV namespace (no prefix)')
+        
         # QoS profiles
         self.reliable_qos = QoSProfile(
             reliability=QoSReliabilityPolicy.RELIABLE,
@@ -44,9 +53,10 @@ class UAVStatusMonitor(Node):
         self._create_subscribers()
         
         # Publishers para alertas
+        alert_topic = self._build_uav_topic('/uav_alerts')
         self.alert_pub = self.create_publisher(
             String,
-            '/uav_alerts',
+            alert_topic,
             self.reliable_qos
         )
         
@@ -57,19 +67,28 @@ class UAVStatusMonitor(Node):
         self.create_timer(5.0, self.check_connection)
         
         self.get_logger().info('UAV Status Monitor iniciado')
+
+    def _build_uav_topic(self, topic):
+        """Build complete topic name with namespace prefix for UAV topics."""
+        if self.uav_namespace:
+            return f"{self.uav_namespace}{topic}"
+        return topic
         
     def _create_subscribers(self):
         """Criar subscribers para dados de status"""
+        uav_status_topic = self._build_uav_topic('/uav_status')
+        mission_state_topic = self._build_uav_topic('/mission_state')
+        
         self.uav_status_sub = self.create_subscription(
             UavStatus,
-            '/uav_status',
+            uav_status_topic,
             self.uav_status_callback,
             self.reliable_qos
         )
         
         self.mission_state_sub = self.create_subscription(
             MissionState,
-            '/mission_state',
+            mission_state_topic,
             self.mission_state_callback,
             self.reliable_qos
         )

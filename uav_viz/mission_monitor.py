@@ -30,6 +30,15 @@ class UAVMissionMonitor(Node):
     def __init__(self):
         super().__init__('uav_mission_monitor')
         
+        # Declare and get namespace parameter for UAV topics
+        self.declare_parameter('uav_namespace', '')
+        self.uav_namespace = self.get_parameter('uav_namespace').value
+        
+        if self.uav_namespace:
+            self.get_logger().info(f'Using UAV namespace: {self.uav_namespace}')
+        else:
+            self.get_logger().info('Using default UAV namespace (no prefix)')
+        
         # QoS profiles
         self.reliable_qos = QoSProfile(
             reliability=QoSReliabilityPolicy.RELIABLE,
@@ -39,20 +48,20 @@ class UAVMissionMonitor(Node):
         
         # Estado da missão
         self.current_mission = None
-        self.mission_history = []
         self.mission_start_time = None
-        self.last_position = None
         self.total_distance = 0.0
+        self.last_position = None
         
-        # Estatísticas
+        # Estatísticas gerais
         self.mission_stats = {
             'total_missions': 0,
             'successful_missions': 0,
-            'failed_missions': 0,
             'total_flight_time': 0.0,
-            'total_distance_flown': 0.0,
-            'average_mission_duration': 0.0
+            'total_distance_flown': 0.0
         }
+        
+        # Histórico de missões
+        self.mission_history = []
         
         # Parâmetros
         self.declare_parameter('log_file_path', '/tmp/uav_mission_log.json')
@@ -65,9 +74,10 @@ class UAVMissionMonitor(Node):
         self._create_subscribers()
         
         # Publishers
+        mission_log_topic = self._build_uav_topic('/mission_logs')
         self.mission_log_pub = self.create_publisher(
             String,
-            '/mission_logs',
+            mission_log_topic,
             self.reliable_qos
         )
         
@@ -79,25 +89,35 @@ class UAVMissionMonitor(Node):
         
         self.get_logger().info('UAV Mission Monitor iniciado')
         
+    def _build_uav_topic(self, topic):
+        """Build complete topic name with namespace prefix for UAV topics."""
+        if self.uav_namespace:
+            return f"{self.uav_namespace}{topic}"
+        return topic
+        
     def _create_subscribers(self):
         """Criar subscribers"""
+        uav_status_topic = self._build_uav_topic('/uav_status')
+        mission_state_topic = self._build_uav_topic('/mission_state')
+        mission_cmd_topic = self._build_uav_topic('/mission_cmd')
+        
         self.uav_status_sub = self.create_subscription(
             UavStatus,
-            '/uav_status',
+            uav_status_topic,
             self.uav_status_callback,
             self.reliable_qos
         )
         
         self.mission_state_sub = self.create_subscription(
             MissionState,
-            '/mission_state',
+            mission_state_topic,
             self.mission_state_callback,
             self.reliable_qos
         )
         
         self.mission_cmd_sub = self.create_subscription(
             MissionCommand,
-            '/mission_cmd',
+            mission_cmd_topic,
             self.mission_command_callback,
             self.reliable_qos
         )

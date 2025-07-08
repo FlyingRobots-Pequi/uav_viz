@@ -98,6 +98,7 @@ class UAVVisualizer(Node):
         self.declare_parameter('update_rate', self.config.update_rate)
         self.declare_parameter('base_frame', 'map')
         self.declare_parameter('vehicle_frame', 'base_link')
+        self.declare_parameter('uav_namespace', '')
         
         # Get parameter values
         self.config.vehicle_trail_size = self.get_parameter('vehicle_trail_size').value
@@ -106,6 +107,18 @@ class UAVVisualizer(Node):
         self.config.update_rate = self.get_parameter('update_rate').value
         self.base_frame = self.get_parameter('base_frame').value
         self.vehicle_frame = self.get_parameter('vehicle_frame').value
+        self.uav_namespace = self.get_parameter('uav_namespace').value
+        
+        if self.uav_namespace:
+            self.get_logger().info(f'Using UAV namespace: {self.uav_namespace}')
+        else:
+            self.get_logger().info('Using default UAV namespace (no prefix)')
+
+    def _build_uav_topic(self, topic):
+        """Build complete topic name with namespace prefix."""
+        if self.uav_namespace:
+            return f"{self.uav_namespace}{topic}"
+        return topic
     
     def _init_state_variables(self):
         """Initialize all state tracking variables"""
@@ -167,21 +180,21 @@ class UAVVisualizer(Node):
         # PX4 vehicle data
         self.local_position_sub = self.create_subscription(
             VehicleLocalPosition,
-            '/fmu/out/vehicle_local_position',
+            self._build_uav_topic('/fmu/out/vehicle_local_position'),
             self.vehicle_local_position_callback,
             self.sensor_qos
         )
         
         self.attitude_sub = self.create_subscription(
             VehicleAttitude,
-            '/fmu/out/vehicle_attitude',
+            self._build_uav_topic('/fmu/out/vehicle_attitude'),
             self.vehicle_attitude_callback,
             self.sensor_qos
         )
         
         self.battery_sub = self.create_subscription(
             BatteryStatus,
-            '/fmu/out/battery_status',
+            self._build_uav_topic('/fmu/out/battery_status'),
             self.battery_status_callback,
             self.sensor_qos
         )
@@ -189,21 +202,21 @@ class UAVVisualizer(Node):
         # Custom UAV interfaces
         self.uav_status_sub = self.create_subscription(
             UavStatus,
-            '/uav_status',
+            self._build_uav_topic('/uav_status'),
             self.uav_status_callback,
             self.reliable_qos
         )
         
         self.mission_state_sub = self.create_subscription(
             MissionState,
-            '/mission_state',
+            self._build_uav_topic('/mission_state'),
             self.mission_state_callback,
             self.reliable_qos
         )
         
         self.mission_cmd_sub = self.create_subscription(
             MissionCommand,
-            '/mission_cmd',
+            self._build_uav_topic('/mission_cmd'),
             self.mission_command_callback,
             self.reliable_qos
         )
@@ -211,7 +224,7 @@ class UAVVisualizer(Node):
         # Trajectory setpoints
         self.setpoint_sub = self.create_subscription(
             TrajectorySetpoint,
-            '/fmu/in/trajectory_setpoint',
+            self._build_uav_topic('/fmu/in/trajectory_setpoint'),
             self.trajectory_setpoint_callback,
             self.sensor_qos
         )
